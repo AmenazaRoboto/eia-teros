@@ -1,0 +1,796 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<base target="_top">
+<title>Expediente EIA Proyecto Teros</title>
+<style>
+:root {
+  --blue: #1a56db; --blue-bg: #eff6ff;
+  --orange: #c05621; --orange-bg: #fff7ed;
+  --green: #065f46; --green-bg: #ecfdf5;
+  --violet: #5b21b6; --violet-bg: #f5f3ff;
+  --gray: #374151; --gray-bg: #f9fafb;
+  --radius: 8px;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: transparent; color: #1e293b; margin: 0; }
+
+/* Search */
+.search-bar { padding: 1rem 1.5rem 0.5rem; }
+.search-input { width: 100%; padding: 0.6rem 1rem; border: 1px solid #cbd5e1; border-radius: var(--radius); font-size: 0.9rem; outline: none; }
+.search-input:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.15); }
+.search-meta { font-size: 0.75rem; color: #64748b; margin-top: 0.4rem; }
+.tags { display: flex; gap: 0.4rem; flex-wrap: wrap; margin-top: 0.5rem; }
+.tag { background: #e2e8f0; color: #475569; padding: 0.2rem 0.6rem; border-radius: 999px; font-size: 0.72rem; cursor: pointer; border: none; transition: all 0.15s; }
+.tag:hover, .tag.active { background: #3b82f6; color: white; }
+
+/* Badges */
+.badge { padding: 0.15rem 0.5rem; border-radius: 999px; font-size: 0.65rem; font-weight: 600; text-transform: uppercase; white-space: nowrap; }
+.badge-EIA_ESTUDIO { background: var(--blue-bg); color: var(--blue); }
+.badge-SOLICITUD_AMPLIACION { background: var(--orange-bg); color: var(--orange); }
+.badge-RESPUESTA_EMPRESA { background: var(--green-bg); color: var(--green); }
+.badge-RESOLUCION { background: var(--violet-bg); color: var(--violet); }
+.badge-INFORME_TECNICO { background: var(--gray-bg); color: var(--gray); }
+.badge-OTRO { background: #f1f5f9; color: #64748b; }
+
+/* Page viewer */
+.viewer-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 200; display: none; overflow-y: auto; }
+.viewer-overlay.open { display: block; }
+.viewer-header { position: sticky; top: 0; background: #0f172a; color: white; padding: 0.75rem 1.5rem; display: flex; align-items: center; gap: 1rem; z-index: 201; }
+.viewer-header h2 { font-size: 0.95rem; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.btn-close { background: #ef4444; color: white; border: none; width: 32px; height: 32px; border-radius: 50%; cursor: pointer; font-size: 1.1rem; display: flex; align-items: center; justify-content: center; }
+.btn-back { background: #334155; color: white; border: none; padding: 0.4rem 0.8rem; border-radius: var(--radius); cursor: pointer; font-size: 0.8rem; }
+.btn-back:hover { background: #475569; }
+.btn-pdf { background: #3b82f6; color: white; border: none; padding: 0.4rem 0.8rem; border-radius: var(--radius); cursor: pointer; font-size: 0.8rem; text-decoration: none; }
+
+/* Page grid inside viewer */
+.page-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 0.75rem; padding: 1rem 1.5rem; }
+.page-thumb { background: white; border-radius: var(--radius); overflow: hidden; cursor: pointer; transition: transform 0.15s, box-shadow 0.15s; position: relative; }
+.page-thumb:hover { transform: scale(1.03); box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
+.page-thumb img { width: 100%; display: block; }
+.page-thumb .page-num { position: absolute; bottom: 0; right: 0; background: rgba(0,0,0,0.7); color: white; font-size: 0.65rem; padding: 0.15rem 0.4rem; border-radius: var(--radius) 0 0 0; }
+.page-thumb.highlight { outline: 3px solid #f59e0b; outline-offset: -1px; }
+
+/* Full page view */
+.fullpage { display: none; }
+.fullpage.open { display: flex; flex-direction: column; height: 100vh; }
+.fullpage-nav { display: flex; align-items: center; justify-content: center; gap: 1rem; padding: 0.5rem; background: #1e293b; }
+.fullpage-nav button { background: #334155; color: white; border: none; padding: 0.4rem 1rem; border-radius: var(--radius); cursor: pointer; font-size: 0.85rem; }
+.fullpage-nav button:hover { background: #475569; }
+.fullpage-nav button:disabled { opacity: 0.3; cursor: default; }
+.fullpage-nav span { color: #94a3b8; font-size: 0.8rem; }
+.fullpage-content { flex: 1; display: flex; overflow: hidden; }
+.fullpage-img { flex: 1; overflow: auto; display: flex; align-items: flex-start; justify-content: center; background: #0f172a; padding: 1rem; }
+.fullpage-img img { max-width: 100%; height: auto; box-shadow: 0 4px 24px rgba(0,0,0,0.4); }
+.fullpage-text { width: 400px; overflow-y: auto; background: white; padding: 1.25rem; font-size: 0.82rem; line-height: 1.6; color: #334155; border-left: 1px solid #e2e8f0; }
+.fullpage-text .ocr-badge { display: inline-block; background: #fef3c7; color: #92400e; font-size: 0.65rem; padding: 0.1rem 0.4rem; border-radius: 4px; margin-bottom: 0.5rem; }
+mark { background: #fde68a; color: #1e293b; padding: 0 2px; border-radius: 2px; }
+
+/* Canvas global view */
+#canvas-viewport {
+  position: fixed; top: 0; left: 0;
+  width: 100vw; height: 100vh;
+  overflow: hidden; cursor: grab;
+  background: #f0ece4; z-index: 10;
+  -webkit-user-select: none; user-select: none;
+}
+#canvas-viewport.dragging { cursor: grabbing; }
+#canvas-viewport.dragging #canvas-surface { pointer-events: none; }
+#canvas-surface {
+  position: absolute; top: 0; left: 0;
+  transform-origin: 0 0;
+  will-change: transform;
+}
+.canvas-thumb {
+  position: absolute; background: white;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+  border-radius: 2px; overflow: hidden; border: 2px solid;
+  contain: layout style paint;
+}
+#canvas-viewport:not(.dragging) .canvas-thumb:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.25); z-index: 1; }
+.canvas-thumb img { display: block; width: 100%; height: 100%; object-fit: contain; pointer-events: none; }
+.canvas-thumb.highlight { outline: 3px solid #e85d04; outline-offset: 2px; }
+.canvas-thumb.dim { opacity: 0.15; }
+.canvas-thumb-label {
+  position: absolute; bottom: 0; left: 0; right: 0;
+  color: white; font-size: 0.55rem; padding: 0.1rem 0.3rem;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.canvas-label { position: absolute; display: flex; align-items: center; gap: 0.5rem; white-space: nowrap; }
+.canvas-label-bar { width: 6px; height: 20px; border-radius: 3px; flex-shrink: 0; }
+.canvas-label-text { font-size: 0.82rem; font-weight: 700; color: #0f172a; max-width: 600px; overflow: hidden; text-overflow: ellipsis; }
+#canvas-hud {
+  position: fixed; top: 0; left: 0; right: 0;
+  z-index: 11; display: flex; align-items: flex-start;
+  justify-content: space-between; padding: 1rem;
+  pointer-events: none;
+}
+#canvas-hud > * { pointer-events: auto; }
+#canvas-search {
+  background: white; border-radius: var(--radius);
+  box-shadow: 0 2px 12px rgba(0,0,0,0.15);
+  padding: 0.5rem 0.75rem; max-width: 420px; width: 100%;
+}
+#canvas-controls {
+  display: flex; flex-direction: column; gap: 0.35rem;
+  background: white; border-radius: var(--radius);
+  box-shadow: 0 2px 12px rgba(0,0,0,0.15); padding: 0.35rem;
+}
+#canvas-controls button {
+  width: 36px; height: 36px; border: none; background: transparent;
+  cursor: pointer; font-size: 1.1rem; border-radius: 6px;
+  color: #334155; display: flex; align-items: center; justify-content: center;
+}
+#canvas-controls button:hover { background: #f1f5f9; }
+
+/* Responsive */
+@media (max-width: 768px) {
+  .fullpage-text { display: none; }
+}
+@media (max-width: 480px) {
+  .page-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+/* Landing page */
+#landing {
+  min-height: 100vh; display: flex; align-items: center; justify-content: center;
+  background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 100%);
+  padding: 2rem;
+}
+.landing-card {
+  background: white; border-radius: 16px; max-width: 620px; width: 100%;
+  padding: 3rem 2.5rem; text-align: center;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+}
+.landing-card .landing-badge {
+  display: inline-block; background: #f1f5f9; color: #64748b;
+  font-size: 0.7rem; font-weight: 600; text-transform: uppercase;
+  padding: 0.25rem 0.75rem; border-radius: 999px; letter-spacing: 0.05em;
+  margin-bottom: 1.25rem;
+}
+.landing-card h1 {
+  font-size: 1.5rem; font-weight: 800; color: #0f172a;
+  line-height: 1.3; margin-bottom: 0.5rem;
+}
+.landing-card .landing-subtitle {
+  font-size: 0.9rem; color: #64748b; line-height: 1.5; margin-bottom: 1.5rem;
+}
+.landing-stats {
+  display: flex; justify-content: center; gap: 1.5rem;
+  margin-bottom: 2rem; flex-wrap: wrap;
+}
+.landing-stat {
+  text-align: center;
+}
+.landing-stat .num {
+  font-size: 1.8rem; font-weight: 800; color: #0f172a; line-height: 1;
+}
+.landing-stat .label {
+  font-size: 0.72rem; color: #94a3b8; margin-top: 0.2rem;
+}
+.landing-meta {
+  font-size: 0.75rem; color: #94a3b8; line-height: 1.6;
+  margin-bottom: 2rem; padding: 0.75rem; background: #f8fafc;
+  border-radius: var(--radius);
+}
+.landing-btn {
+  display: inline-block; background: #0f172a; color: white;
+  border: none; padding: 0.85rem 2.5rem; border-radius: 999px;
+  font-size: 0.95rem; font-weight: 600; cursor: pointer;
+  transition: background 0.15s, transform 0.15s;
+}
+.landing-btn:hover { background: #1e293b; transform: translateY(-1px); }
+@media (max-width: 480px) {
+  .landing-card { padding: 2rem 1.5rem; }
+  .landing-card h1 { font-size: 1.2rem; }
+  .landing-stats { gap: 1rem; }
+  .landing-stat .num { font-size: 1.4rem; }
+}
+
+/* Utility */
+.hidden { display: none !important; }
+.loading { text-align: center; padding: 3rem; color: #64748b; }
+</style>
+</head>
+<body>
+
+<!-- Landing page -->
+<div id="landing">
+  <div class="landing-card">
+    <span class="landing-badge">Expediente EM2023/36001/015669</span>
+    <h1>Evaluaci&oacute;n de Impacto Ambiental<br>Proyecto Teros (Google)</h1>
+    <p class="landing-subtitle">Datacenter de Eleanor Applications S.R.L. (Google) en Canelones, Uruguay.<br>Resuelto por Resoluci&oacute;n Ministerial 644/2024.</p>
+    <div class="landing-stats" id="landingStats"></div>
+    <div class="landing-meta">
+      Ministerio de Ambiente &middot; DINACEA<br>
+      Categor&iacute;a B &middot; Autorizaci&oacute;n Ambiental Previa
+    </div>
+    <button class="landing-btn" id="btnEntrar">Explorar el expediente</button>
+  </div>
+</div>
+
+<!-- Canvas global view -->
+<div id="canvas-viewport" style="display:none;">
+  <div id="canvas-surface"></div>
+  <div id="canvas-hud">
+    <div id="canvas-search">
+      <input type="text" class="search-input" id="searchInput" placeholder="Buscar en los documentos...">
+      <div class="search-meta" id="searchMeta"></div>
+      <div class="tags" id="tagsContainer"></div>
+    </div>
+    <div id="canvas-controls">
+      <button onclick="canvasZoomIn()" title="Acercar">+</button>
+      <button onclick="canvasZoomOut()" title="Alejar">&minus;</button>
+      <button onclick="canvasFitAll()" title="Ver todo">&#x2316;</button>
+      <button onclick="canvasClose()" title="Volver">&larr;</button>
+    </div>
+  </div>
+</div>
+
+<!-- Vista C: Document viewer overlay -->
+<div class="viewer-overlay" id="viewerOverlay">
+  <div id="viewerPageGrid">
+    <div class="viewer-header">
+      <button class="btn-back" id="btnBackToIndex">&larr; Volver</button>
+      <h2 id="viewerTitle"></h2>
+      <a class="btn-pdf" id="btnViewPdf" target="_blank">PDF original</a>
+      <button class="btn-close" id="btnCloseViewer">&times;</button>
+    </div>
+    <div class="page-grid" id="pageGrid"></div>
+  </div>
+  <div class="fullpage hidden" id="fullpageView">
+    <div class="viewer-header">
+      <button class="btn-back" id="btnBackToPages">&larr; Volver a p&aacute;ginas</button>
+      <h2 id="fullpageTitle"></h2>
+      <button class="btn-close" id="btnCloseFullpage">&times;</button>
+    </div>
+    <div class="fullpage-nav">
+      <button id="btnPrev">&larr; Anterior</button>
+      <span id="pageIndicator"></span>
+      <button id="btnNext">Siguiente &rarr;</button>
+    </div>
+    <div class="fullpage-content">
+      <div class="fullpage-img"><img id="fullpageImg" alt=""></div>
+      <div class="fullpage-text" id="fullpageText"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// DATA will be loaded from data.json or embedded
+let DATA = null;
+let currentDoc = null;
+let currentPage = 0;
+let searchTerm = '';
+let searchResults = null; // Map: doc_id -> Set of matching page numbers
+
+// Type labels
+const TYPE_LABELS = {
+  EIA_ESTUDIO: 'Estudio',
+  SOLICITUD_AMPLIACION: 'Solicitud',
+  RESPUESTA_EMPRESA: 'Respuesta',
+  RESOLUCION: 'Resoluci\u00f3n',
+  INFORME_TECNICO: 'Inf. T\u00e9cnico',
+  OTRO: 'Otro'
+};
+
+// Initialize
+async function init() {
+  try {
+    const resp = await fetch('data.json');
+    DATA = await resp.json();
+  } catch(e) {
+    // Try embedded data
+    if (typeof EMBEDDED_DATA !== 'undefined') {
+      DATA = EMBEDDED_DATA;
+    } else {
+      document.getElementById('landing').innerHTML = '<div class="loading" style="color:white;">Error: no se pudo cargar data.json</div>';
+      return;
+    }
+  }
+
+  // Stats
+  const totalPages = DATA.documentos.reduce((s, d) => s + d.n_paginas, 0);
+  const numIntercambios = DATA.intercambios ? DATA.intercambios.length : 0;
+
+  // Landing stats
+  document.getElementById('landingStats').innerHTML =
+    `<div class="landing-stat"><div class="num">${DATA.documentos.length}</div><div class="label">documentos</div></div>` +
+    `<div class="landing-stat"><div class="num">${totalPages}</div><div class="label">p\u00e1ginas</div></div>` +
+    (numIntercambios ? `<div class="landing-stat"><div class="num">${numIntercambios}</div><div class="label">intercambios</div></div>` : '');
+
+  // Enter button
+  document.getElementById('btnEntrar').addEventListener('click', () => {
+    document.getElementById('landing').classList.add('hidden');
+    openCanvasView();
+  });
+
+  // Render
+  renderTags();
+  bindEvents();
+}
+
+function bindEvents() {
+  // Search
+  let debounce;
+  document.getElementById('searchInput').addEventListener('input', (e) => {
+    clearTimeout(debounce);
+    debounce = setTimeout(() => {
+      searchTerm = e.target.value.trim().toLowerCase();
+      performSearch();
+    }, 200);
+  });
+
+  // Viewer close
+  document.getElementById('btnCloseViewer').addEventListener('click', closeViewer);
+  document.getElementById('btnBackToIndex').addEventListener('click', closeViewer);
+  document.getElementById('btnCloseFullpage').addEventListener('click', () => {
+    document.getElementById('fullpageView').classList.remove('open');
+    document.getElementById('fullpageView').classList.add('hidden');
+    document.getElementById('viewerPageGrid').classList.remove('hidden');
+  });
+  document.getElementById('btnBackToPages').addEventListener('click', () => {
+    document.getElementById('fullpageView').classList.remove('open');
+    document.getElementById('fullpageView').classList.add('hidden');
+    document.getElementById('viewerPageGrid').classList.remove('hidden');
+  });
+
+  // Page navigation
+  document.getElementById('btnPrev').addEventListener('click', () => navigatePage(-1));
+  document.getElementById('btnNext').addEventListener('click', () => navigatePage(1));
+
+  // Keyboard
+  document.addEventListener('keydown', (e) => {
+    if (document.getElementById('viewerOverlay').classList.contains('open')) {
+      if (document.getElementById('fullpageView').classList.contains('open')) {
+        if (e.key === 'ArrowLeft') navigatePage(-1);
+        if (e.key === 'ArrowRight') navigatePage(1);
+        if (e.key === 'Escape') {
+          document.getElementById('fullpageView').classList.remove('open');
+          document.getElementById('fullpageView').classList.add('hidden');
+          document.getElementById('viewerPageGrid').classList.remove('hidden');
+        }
+      } else {
+        if (e.key === 'Escape') closeViewer();
+      }
+    } else if (e.key === 'Escape') {
+      const si = document.getElementById('searchInput');
+      if (document.activeElement === si) { si.blur(); } else { canvasClose(); }
+    }
+  });
+}
+
+// Search
+function performSearch() {
+  if (!searchTerm) {
+    searchResults = null;
+    document.getElementById('searchMeta').textContent = '';
+    updateCanvasHighlights();
+    return;
+  }
+
+  searchResults = new Map();
+  let totalMatches = 0;
+
+  DATA.documentos.forEach(doc => {
+    const matchingPages = new Set();
+    doc.paginas.forEach(p => {
+      if (p.texto && p.texto.toLowerCase().includes(searchTerm)) {
+        matchingPages.add(p.n);
+        totalMatches++;
+      }
+    });
+    if (matchingPages.size > 0) {
+      searchResults.set(doc.id, matchingPages);
+    }
+  });
+
+  document.getElementById('searchMeta').textContent =
+    `${totalMatches} p\u00e1ginas en ${searchResults.size} documentos contienen "${searchTerm}"`;
+
+  updateCanvasHighlights();
+}
+
+// Tags
+function renderTags() {
+  const container = document.getElementById('tagsContainer');
+  if (!DATA.tags_busqueda) return;
+  container.innerHTML = DATA.tags_busqueda.map(tag =>
+    `<button class="tag" data-tag="${tag}">${tag}</button>`
+  ).join('');
+  container.querySelectorAll('.tag').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const input = document.getElementById('searchInput');
+      input.value = btn.dataset.tag;
+      searchTerm = btn.dataset.tag.toLowerCase();
+      document.querySelectorAll('.tag').forEach(t => t.classList.remove('active'));
+      btn.classList.add('active');
+      performSearch();
+    });
+  });
+}
+
+// [renderDocGrid, renderProcessChart, renderTimeline preserved in index_con_timeline.html]
+// Canvas global view
+const canvasState = { x: 0, y: 0, scale: 1, dragging: false, startX: 0, startY: 0, built: false };
+const CANVAS_MIN_SCALE = 0.05;
+const CANVAS_MAX_SCALE = 6;
+
+function buildCanvas() {
+  if (canvasState.built) return;
+  canvasState.built = true;
+
+  const surface = document.getElementById('canvas-surface');
+  const frag = document.createDocumentFragment();
+  const TYPE_COLORS = {
+    EIA_ESTUDIO:          { bar: '#1a56db', border: '#bfdbfe' },
+    SOLICITUD_AMPLIACION: { bar: '#c05621', border: '#fed7aa' },
+    RESPUESTA_EMPRESA:    { bar: '#065f46', border: '#a7f3d0' },
+    RESOLUCION:           { bar: '#5b21b6', border: '#c4b5fd' },
+    INFORME_TECNICO:      { bar: '#374151', border: '#d1d5db' },
+    OTRO:                 { bar: '#64748b', border: '#cbd5e1' }
+  };
+
+  const THUMB_W = 180, THUMB_H = 254, GAP_X = 24, GAP_Y = 32;
+  const PADDING = 60, LABEL_H = 40, SECTION_GAP = 48, MAX_COLS = 12;
+
+  const sorted = [...DATA.documentos].sort((a, b) => a.fecha.localeCompare(b.fecha));
+  let currentY = PADDING;
+  let maxWidth = 0;
+
+  sorted.forEach(doc => {
+    const colors = TYPE_COLORS[doc.tipo] || TYPE_COLORS.OTRO;
+    const label = TYPE_LABELS[doc.tipo] || doc.tipo;
+    const cols = Math.min(MAX_COLS, Math.max(4, Math.ceil(Math.sqrt(doc.n_paginas * 1.5))));
+
+    // Section label
+    const labelEl = document.createElement('div');
+    labelEl.className = 'canvas-label';
+    labelEl.style.cssText = `left:${PADDING}px;top:${currentY}px;`;
+    labelEl.innerHTML = `<span class="canvas-label-bar" style="background:${colors.bar};"></span>` +
+      `<span class="canvas-label-text">${doc.nombre}</span>` +
+      `<span class="badge badge-${doc.tipo}" style="font-size:0.6rem;">${label}</span>`;
+    frag.appendChild(labelEl);
+    currentY += LABEL_H;
+
+    // Pages
+    doc.thumbs.forEach((thumb, i) => {
+      const col = i % cols;
+      const row = Math.floor(i / cols);
+      const x = PADDING + col * (THUMB_W + GAP_X);
+      const y = currentY + row * (THUMB_H + GAP_Y);
+
+      const el = document.createElement('div');
+      el.className = 'canvas-thumb';
+      el.dataset.docId = doc.id;
+      el.dataset.pageN = String(i + 1);
+      el.style.cssText = `left:${x}px;top:${y}px;width:${THUMB_W}px;height:${THUMB_H}px;border-color:${colors.border};`;
+      el.innerHTML = `<img data-src="${thumb}" alt="p${i+1}">` +
+        `<div class="canvas-thumb-label" style="background:${colors.bar};">p.${i+1}</div>`;
+      frag.appendChild(el);
+
+      maxWidth = Math.max(maxWidth, x + THUMB_W + PADDING);
+    });
+
+    const rows = Math.ceil(doc.n_paginas / cols);
+    currentY += rows * (THUMB_H + GAP_Y) + SECTION_GAP;
+  });
+
+  surface.appendChild(frag);
+  surface.style.width = maxWidth + 'px';
+  surface.style.height = (currentY + PADDING) + 'px';
+
+  // Lazy loading
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        const img = entry.target.querySelector('img[data-src]');
+        if (img) { img.src = img.dataset.src; img.removeAttribute('data-src'); observer.unobserve(entry.target); }
+      }
+    });
+  }, { root: document.getElementById('canvas-viewport'), rootMargin: '400px' });
+
+  surface.querySelectorAll('.canvas-thumb').forEach(el => observer.observe(el));
+  initCanvasEvents();
+}
+
+let _rafId = 0, _rasterizeTimer;
+function applyCanvasTransform() {
+  if (_rafId) return;
+  _rafId = requestAnimationFrame(() => {
+    _rafId = 0;
+    const surface = document.getElementById('canvas-surface');
+    surface.style.transform =
+      `translate3d(${canvasState.x}px, ${canvasState.y}px, 0) scale(${canvasState.scale})`;
+    // After interaction settles, force re-rasterize for crisp text
+    clearTimeout(_rasterizeTimer);
+    _rasterizeTimer = setTimeout(() => {
+      surface.style.willChange = 'auto';
+    }, 400);
+  });
+}
+function applyCanvasTransformSync() {
+  // For animated transitions (fitAll, panTo) — skip RAF, apply immediately
+  const surface = document.getElementById('canvas-surface');
+  surface.style.transform =
+    `translate3d(${canvasState.x}px, ${canvasState.y}px, 0) scale(${canvasState.scale})`;
+}
+
+function centerCanvas() {
+  const vw = window.innerWidth, vh = window.innerHeight;
+  const surface = document.getElementById('canvas-surface');
+  const sw = parseFloat(surface.style.width), sh = parseFloat(surface.style.height);
+  const fitScale = Math.min(vw / sw, vh / sh) * 0.9;
+  canvasState.scale = Math.max(CANVAS_MIN_SCALE, Math.min(CANVAS_MAX_SCALE, fitScale));
+  canvasState.x = (vw - sw * canvasState.scale) / 2;
+  canvasState.y = (vh - sh * canvasState.scale) / 2;
+  applyCanvasTransformSync();
+}
+
+function openCanvasView() {
+  buildCanvas();
+  document.getElementById('canvas-viewport').style.display = 'block';
+  document.body.style.overflow = 'hidden';
+  centerCanvas();
+  updateCanvasHighlights();
+}
+
+function closeCanvasView() {
+  document.getElementById('canvas-viewport').style.display = 'none';
+  document.body.style.overflow = '';
+}
+
+function canvasClose() {
+  closeCanvasView();
+  document.getElementById('landing').classList.remove('hidden');
+}
+
+function canvasZoomIn() { applyCanvasZoom(1.3); }
+function canvasZoomOut() { applyCanvasZoom(0.77); }
+
+function applyCanvasZoom(factor) {
+  const vw = window.innerWidth, vh = window.innerHeight;
+  const newScale = Math.min(CANVAS_MAX_SCALE, Math.max(CANVAS_MIN_SCALE, canvasState.scale * factor));
+  const ratio = newScale / canvasState.scale;
+  canvasState.x = vw/2 - (vw/2 - canvasState.x) * ratio;
+  canvasState.y = vh/2 - (vh/2 - canvasState.y) * ratio;
+  canvasState.scale = newScale;
+  applyCanvasTransform();
+}
+
+function canvasFitAll() {
+  const surface = document.getElementById('canvas-surface');
+  surface.style.transition = 'transform 0.4s ease';
+  centerCanvas();
+  setTimeout(() => { surface.style.transition = ''; }, 450);
+}
+
+function initCanvasEvents() {
+  const viewport = document.getElementById('canvas-viewport');
+
+  // Drag
+  viewport.addEventListener('mousedown', e => {
+    if (e.target.closest('#canvas-hud')) return;
+    canvasState.dragging = true;
+    canvasState.startX = e.clientX - canvasState.x;
+    canvasState.startY = e.clientY - canvasState.y;
+    viewport.classList.add('dragging');
+    e.preventDefault();
+  });
+
+  document.addEventListener('mousemove', e => {
+    if (!canvasState.dragging) return;
+    canvasState.x = e.clientX - canvasState.startX;
+    canvasState.y = e.clientY - canvasState.startY;
+    applyCanvasTransform();
+  });
+
+  document.addEventListener('mouseup', () => {
+    canvasState.dragging = false;
+    viewport.classList.remove('dragging');
+  });
+
+  // Zoom with scroll centered on cursor
+  viewport.addEventListener('wheel', e => {
+    e.preventDefault();
+    const factor = e.deltaY > 0 ? 0.92 : 1.08;
+    const newScale = Math.min(CANVAS_MAX_SCALE, Math.max(CANVAS_MIN_SCALE, canvasState.scale * factor));
+    const ratio = newScale / canvasState.scale;
+    const rect = viewport.getBoundingClientRect();
+    const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+    canvasState.x = mx - (mx - canvasState.x) * ratio;
+    canvasState.y = my - (my - canvasState.y) * ratio;
+    canvasState.scale = newScale;
+    applyCanvasTransform();
+  }, { passive: false });
+
+  // Touch: 1-finger drag, 2-finger pinch zoom
+  let lastTouches = [];
+
+  viewport.addEventListener('touchstart', e => {
+    if (e.target.closest('#canvas-hud')) return;
+    lastTouches = Array.from(e.touches);
+  }, { passive: true });
+
+  viewport.addEventListener('touchmove', e => {
+    if (e.target.closest('#canvas-hud')) return;
+    e.preventDefault();
+    const touches = Array.from(e.touches);
+
+    if (touches.length === 1 && lastTouches.length === 1) {
+      canvasState.x += touches[0].clientX - lastTouches[0].clientX;
+      canvasState.y += touches[0].clientY - lastTouches[0].clientY;
+    }
+
+    if (touches.length === 2 && lastTouches.length === 2) {
+      const prevDist = Math.hypot(lastTouches[0].clientX - lastTouches[1].clientX, lastTouches[0].clientY - lastTouches[1].clientY);
+      const newDist = Math.hypot(touches[0].clientX - touches[1].clientX, touches[0].clientY - touches[1].clientY);
+      const factor = newDist / prevDist;
+      const newScale = Math.min(CANVAS_MAX_SCALE, Math.max(CANVAS_MIN_SCALE, canvasState.scale * factor));
+      const ratio = newScale / canvasState.scale;
+      const cx = (touches[0].clientX + touches[1].clientX) / 2;
+      const cy = (touches[0].clientY + touches[1].clientY) / 2;
+      canvasState.x = cx - (cx - canvasState.x) * ratio;
+      canvasState.y = cy - (cy - canvasState.y) * ratio;
+      canvasState.scale = newScale;
+    }
+
+    lastTouches = touches;
+    applyCanvasTransform();
+  }, { passive: false });
+}
+
+function updateCanvasHighlights() {
+  if (!canvasState.built) return;
+  let firstMatch = null;
+
+  document.querySelectorAll('.canvas-thumb').forEach(el => {
+    const docId = el.dataset.docId;
+    const pageNum = parseInt(el.dataset.pageN);
+    el.classList.remove('highlight', 'dim');
+
+    if (searchResults) {
+      if (searchResults.has(docId) && searchResults.get(docId).has(pageNum)) {
+        el.classList.add('highlight');
+        if (!firstMatch) firstMatch = el;
+      } else {
+        el.classList.add('dim');
+      }
+    }
+  });
+
+  if (firstMatch && searchResults) panToCanvasElement(firstMatch);
+}
+
+function panToCanvasElement(el) {
+  const left = parseFloat(el.style.left), top = parseFloat(el.style.top);
+  const w = parseFloat(el.style.width), h = parseFloat(el.style.height);
+  const vw = window.innerWidth, vh = window.innerHeight;
+  canvasState.x = vw / 2 - (left + w / 2) * canvasState.scale;
+  canvasState.y = vh / 2 - (top + h / 2) * canvasState.scale;
+  const surface = document.getElementById('canvas-surface');
+  surface.style.transition = 'transform 0.4s ease';
+  applyCanvasTransformSync();
+  setTimeout(() => { surface.style.transition = ''; }, 450);
+}
+
+// Vista C: Document viewer
+function openDocViewer(docId) {
+  currentDoc = DATA.documentos.find(d => d.id === docId);
+  if (!currentDoc) return;
+
+  const overlay = document.getElementById('viewerOverlay');
+  overlay.classList.add('open');
+  document.body.style.overflow = 'hidden';
+
+  document.getElementById('viewerTitle').textContent = currentDoc.nombre;
+  document.getElementById('btnViewPdf').href = currentDoc.ruta_pdf || `pdfs/${currentDoc.archivo}`;
+
+  const grid = document.getElementById('pageGrid');
+  const matchingPages = searchResults ? searchResults.get(docId) : null;
+
+  grid.innerHTML = currentDoc.thumbs.map((thumb, i) => {
+    const isMatch = matchingPages && matchingPages.has(i + 1);
+    return `
+    <div class="page-thumb ${isMatch ? 'highlight' : ''}" data-idx="${i}">
+      <img src="${thumb}" loading="lazy" alt="P\u00e1gina ${i+1}">
+      <span class="page-num">p. ${i+1}</span>
+    </div>`;
+  }).join('');
+
+  grid.querySelectorAll('.page-thumb').forEach(el => {
+    el.addEventListener('click', () => openFullPage(parseInt(el.dataset.idx)));
+  });
+
+  document.getElementById('viewerPageGrid').classList.remove('hidden');
+  document.getElementById('fullpageView').classList.remove('open');
+  document.getElementById('fullpageView').classList.add('hidden');
+}
+
+function openFullPage(idx) {
+  if (!currentDoc) return;
+  currentPage = idx;
+
+  document.getElementById('viewerPageGrid').classList.add('hidden');
+  document.getElementById('fullpageView').classList.remove('hidden');
+  document.getElementById('fullpageView').classList.add('open');
+
+  renderFullPage();
+}
+
+function renderFullPage() {
+  const page = currentDoc.paginas[currentPage];
+  const thumb = currentDoc.thumbs[currentPage];
+
+  document.getElementById('fullpageImg').src = thumb;
+  document.getElementById('fullpageTitle').textContent = `${currentDoc.nombre} - P\u00e1gina ${currentPage + 1}`;
+  document.getElementById('pageIndicator').textContent = `${currentPage + 1} / ${currentDoc.n_paginas}`;
+
+  document.getElementById('btnPrev').disabled = currentPage === 0;
+  document.getElementById('btnNext').disabled = currentPage >= currentDoc.n_paginas - 1;
+
+  // Text panel
+  let textHtml = '';
+  if (page.es_ocr) {
+    textHtml += '<span class="ocr-badge">Texto extra\u00eddo por OCR</span><br>';
+  }
+  let texto = page.texto || '(Sin texto extra\u00eddo)';
+  if (searchTerm) {
+    texto = highlightText(texto, searchTerm);
+  }
+  textHtml += texto.replace(/\n/g, '<br>');
+  document.getElementById('fullpageText').innerHTML = textHtml;
+}
+
+function navigatePage(delta) {
+  const newPage = currentPage + delta;
+  if (newPage >= 0 && newPage < currentDoc.n_paginas) {
+    currentPage = newPage;
+    renderFullPage();
+  }
+}
+
+function closeViewer() {
+  document.getElementById('viewerOverlay').classList.remove('open');
+  document.body.style.overflow = 'hidden';
+  currentDoc = null;
+}
+
+// Utilities
+function formatDate(dateStr) {
+  if (!dateStr) return '';
+  const [y, m, d] = dateStr.split('-');
+  const months = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+  return `${parseInt(d)} ${months[parseInt(m)-1]} ${y}`;
+}
+
+function highlightText(text, term) {
+  if (!term) return text;
+  const escaped = term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const re = new RegExp(`(${escaped})`, 'gi');
+  return text.replace(re, '<mark>$1</mark>');
+}
+
+// Boot
+document.addEventListener('DOMContentLoaded', init);
+
+// Auto-resize for iframe embedding
+(function() {
+  var lastH = 0;
+  function notifyHeight() {
+    var h = document.documentElement.scrollHeight;
+    if (h !== lastH) {
+      lastH = h;
+      window.parent.postMessage({ type: 'eia-resize', height: h }, '*');
+    }
+  }
+  if (window !== window.parent) {
+    setInterval(notifyHeight, 300);
+    window.addEventListener('resize', notifyHeight);
+  }
+})();
+</script>
+</body>
+</html>
