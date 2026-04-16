@@ -592,8 +592,10 @@ function initCanvasEvents() {
     viewport.classList.remove('dragging');
   });
 
-  // Zoom with scroll centered on cursor
+  // Zoom with Ctrl/Cmd + scroll centered on cursor. Without modifier, let the wheel bubble up
+  // so the parent page (e.g. Tilda embed) can scroll normally.
   viewport.addEventListener('wheel', e => {
+    if (!e.ctrlKey && !e.metaKey) return;
     e.preventDefault();
     const factor = e.deltaY > 0 ? 0.92 : 1.08;
     const newScale = Math.min(CANVAS_MAX_SCALE, Math.max(CANVAS_MIN_SCALE, canvasState.scale * factor));
